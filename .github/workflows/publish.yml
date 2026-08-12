@@ -28,6 +28,8 @@ jobs:
         run: |
           cd projects/kojinx/github
           npm version patch --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Build Library
         run: npm run build
@@ -56,9 +58,9 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
           cd kojinx-frontend
-          npm install @kojinx/github@latest
+          npm pkg set dependencies.@kojinx/github="^${{ env.NEW_VERSION }}"
           
           cd ..
-          git add kojinx-frontend/package.json kojinx-frontend/package-lock.json
+          git add kojinx-frontend/package.json
           git diff --quiet && git diff --staged --quiet || git commit -m "chore: bump @kojinx/github to latest"
           git push origin main
