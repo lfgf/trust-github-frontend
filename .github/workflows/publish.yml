@@ -26,7 +26,7 @@ jobs:
 
       - name: Bump Version
         run: |
-          cd projects/trust-github
+          cd projects/kojinx/github
           npm version patch --no-git-tag-version
 
       - name: Build Library
@@ -34,7 +34,7 @@ jobs:
 
       - name: Publish to NPM
         run: |
-          cd dist/trust-github
+          cd dist/kojinx/github
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -43,7 +43,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add projects/trust-github/package.json
+          git add projects/kojinx/github/package.json
           git diff --quiet && git diff --staged --quiet || git commit -m "chore: bump version [skip ci]"
           git push
 
