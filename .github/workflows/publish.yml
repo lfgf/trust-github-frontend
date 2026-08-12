@@ -58,7 +58,6 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           npm pkg set dependencies.@kojinx/github="^${{ env.NEW_VERSION }}"
           
-          cd ..
-          git add kojinx-frontend/package.json
+          git add package.json
           git diff --quiet && git diff --staged --quiet || git commit -m "chore: bump @kojinx/github to latest"
           git push origin main
