@@ -4,6 +4,7 @@
   "compilerOptions": {
     "paths": {
       "@kojinx/github": [
+        "./dist/kojinx/github",
         "./dist/kojinx/github"
       ]
     },
