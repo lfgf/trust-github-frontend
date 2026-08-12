@@ -56,8 +56,6 @@ jobs:
           cd kojinx-frontend
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          cd kojinx-frontend
           npm pkg set dependencies.@kojinx/github="^${{ env.NEW_VERSION }}"
           
           cd ..
