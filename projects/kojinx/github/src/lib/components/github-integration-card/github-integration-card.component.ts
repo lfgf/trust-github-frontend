@@ -1,4 +1,4 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, Input, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GithubAuthService } from '../../services/github-auth.service';
 
@@ -8,7 +8,7 @@ import { GithubAuthService } from '../../services/github-auth.service';
   imports: [CommonModule],
   template: `
     <!-- The Card -->
-    <div (click)="showModal.set(true)" class="group cursor-pointer relative p-6 rounded-xl bg-kojinx-panel border border-kojinx-border hover:border-white/30 transition-colors">
+    <div (click)="openModal()" class="group cursor-pointer relative p-6 rounded-xl bg-kojinx-panel border border-kojinx-border hover:border-white/30 transition-colors">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center border border-white/20">
@@ -66,12 +66,23 @@ import { GithubAuthService } from '../../services/github-auth.service';
 
             <div class="flex items-center justify-between p-4 bg-black/20 border border-white/5 rounded-xl">
               <div>
-                <p class="font-medium text-white">Repository Mapping</p>
+                <p class="font-medium text-white flex items-center gap-2">
+                  Repository Mapping
+                  @if (isLoadingScope()) {
+                    <svg class="w-4 h-4 animate-spin text-kojinx-blue" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                  }
+                </p>
                 <p class="text-xs text-kojinx-text-muted mt-1">Allow Kojinx to discover and map your repositories</p>
+                @if (isConnected) {
+                  <p class="text-xs text-amber-500 mt-1 mt-2">Toggling this will require you to re-authorize in your browser.</p>
+                }
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" class="sr-only peer" [checked]="mapRepos()" (change)="toggleMapRepos()">
-                <div class="w-11 h-6 bg-black/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-kojinx-blue border border-white/10"></div>
+                <input type="checkbox" class="sr-only peer" [checked]="mapRepos()" (change)="toggleMapRepos()" [disabled]="isLoadingScope()">
+                <div class="w-11 h-6 bg-black/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-kojinx-blue border border-white/10 peer-disabled:opacity-50"></div>
               </label>
             </div>
 
@@ -97,24 +108,58 @@ import { GithubAuthService } from '../../services/github-auth.service';
     }
   `
 })
-export class GithubIntegrationCardComponent {
+export class GithubIntegrationCardComponent implements OnInit {
   @Input() isConnected: boolean = false;
   
   readonly showModal = signal(false);
   readonly mapRepos = signal(true);
+  readonly isLoadingScope = signal(false);
 
   constructor(private githubAuth: GithubAuthService) {}
+
+  ngOnInit() {
+    // Initial fetch if already connected
+    if (this.isConnected) {
+      this.fetchRepoScope();
+    }
+  }
+
+  async openModal() {
+    this.showModal.set(true);
+    if (this.isConnected) {
+      await this.fetchRepoScope();
+    }
+  }
+  
+  private async fetchRepoScope() {
+    this.isLoadingScope.set(true);
+    try {
+      const hasScope = await this.githubAuth.checkRepoScope();
+      this.mapRepos.set(hasScope);
+    } catch (e) {
+      console.error('Failed to check GitHub repo scope', e);
+    } finally {
+      this.isLoadingScope.set(false);
+    }
+  }
   
   closeModal(event: MouseEvent) {
     this.showModal.set(false);
   }
 
-  toggleMapRepos() {
-    this.mapRepos.update(v => !v);
+  async toggleMapRepos() {
+    const newValue = !this.mapRepos();
+    this.mapRepos.set(newValue);
+    
+    if (this.isConnected) {
+      // If connected, toggling instantly triggers re-auth to change token scopes
+      this.showModal.set(false);
+      await this.githubAuth.linkGithub(newValue);
+    }
   }
 
   link() {
-    this.githubAuth.linkGithub();
+    this.githubAuth.linkGithub(this.mapRepos());
   }
 
   unlink() {

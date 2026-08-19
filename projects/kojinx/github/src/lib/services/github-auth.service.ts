@@ -14,14 +14,25 @@ export class GithubAuthService {
     this.setupTauriListener();
   }
 
-  async linkGithub(): Promise<void> {
-    const url = `${this.getApiUrl()}/api/auth/link-github`;
+  async linkGithub(mapRepos: boolean = true): Promise<void> {
+    const url = `${this.getApiUrl()}/api/auth/link-github?mapRepos=${mapRepos}`;
     const token = await this.getToken();
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
     if (res.ok) {
       const data = await res.json();
       if (data.url) await this.openExternal(data.url);
     }
+  }
+
+  async checkRepoScope(): Promise<boolean> {
+    const url = `${this.getApiUrl()}/api/github/debug-token`;
+    const token = await this.getToken();
+    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (res.ok) {
+      const data = await res.json();
+      return data.hasRepoScope === true;
+    }
+    return false;
   }
 
   async unlinkGithub(): Promise<void> {

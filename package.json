@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "postbuild": "xcopy dist\\kojinx\\github ..\\kojinx-frontend\\node_modules\\@kojinx\\github /E /I /Y",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
