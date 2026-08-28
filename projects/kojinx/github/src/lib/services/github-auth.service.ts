@@ -15,7 +15,7 @@ export class GithubAuthService {
   }
 
   async linkGithub(mapRepos: boolean = true): Promise<void> {
-    const url = `${this.getApiUrl()}/api/auth/link-github?mapRepos=${mapRepos}`;
+    const url = `${this.getApiUrl()}/api/auth/link-github`;
     const token = await this.getToken();
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
     if (res.ok) {
@@ -30,7 +30,7 @@ export class GithubAuthService {
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
     if (res.ok) {
       const data = await res.json();
-      return data.hasRepoScope === true;
+      return data.hasRepoScope === true || data.apiCallSuccess === true;
     }
     return false;
   }

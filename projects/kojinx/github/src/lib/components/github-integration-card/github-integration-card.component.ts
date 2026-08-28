@@ -60,30 +60,22 @@ import { GithubAuthService } from '../../services/github-auth.service';
           <div class="p-6 space-y-6">
             
             <div class="bg-kojinx-blue/10 border border-kojinx-blue/30 rounded-xl p-4 text-sm text-slate-300">
-              <p>Log in to automatically pull your profile data and projects.</p>
-              <p class="mt-2 text-kojinx-blue font-medium">Note: Kojinx only maps the repositories internally. It does not have access to read or modify your source code.</p>
+              <p>Log in to automatically pull your profile data and discover your projects.</p>
+              <p class="mt-2 text-kojinx-blue font-medium">Note: Kojinx uses fine-grained GitHub App permissions (Metadata only). It does not have access to read or modify your source code.</p>
             </div>
 
-            <div class="flex items-center justify-between p-4 bg-black/20 border border-white/5 rounded-xl">
-              <div>
-                <p class="font-medium text-white flex items-center gap-2">
-                  Repository Mapping
-                  @if (isLoadingScope()) {
-                    <svg class="w-4 h-4 animate-spin text-kojinx-blue" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
-                  }
-                </p>
-                <p class="text-xs text-kojinx-text-muted mt-1">Allow Kojinx to discover and map your repositories</p>
-                @if (isConnected) {
-                  <p class="text-xs text-amber-500 mt-1 mt-2">Toggling this will require you to re-authorize in your browser.</p>
-                }
+            <div class="flex items-start gap-3.5 p-4 bg-black/20 border border-white/5 rounded-xl">
+              <div class="p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 shrink-0 mt-0.5">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
               </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" class="sr-only peer" [checked]="mapRepos()" (change)="toggleMapRepos()" [disabled]="isLoadingScope()">
-                <div class="w-11 h-6 bg-black/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-kojinx-blue border border-white/10 peer-disabled:opacity-50"></div>
-              </label>
+              <div>
+                <p class="text-sm font-semibold text-white">Fine-Grained Security Model</p>
+                <p class="text-xs text-kojinx-text-muted mt-1 leading-relaxed">
+                  Your repositories are listed via GitHub App tokens with strictly <span class="text-slate-200 font-mono">metadata:read</span>. Source code and commit access are cryptographically blocked by the GitHub API.
+                </p>
+              </div>
             </div>
 
           </div>
@@ -108,58 +100,23 @@ import { GithubAuthService } from '../../services/github-auth.service';
     }
   `
 })
-export class GithubIntegrationCardComponent implements OnInit {
+export class GithubIntegrationCardComponent {
   @Input() isConnected: boolean = false;
   
   readonly showModal = signal(false);
-  readonly mapRepos = signal(true);
-  readonly isLoadingScope = signal(false);
 
   constructor(private githubAuth: GithubAuthService) {}
 
-  ngOnInit() {
-    // Initial fetch if already connected
-    if (this.isConnected) {
-      this.fetchRepoScope();
-    }
-  }
-
-  async openModal() {
+  openModal() {
     this.showModal.set(true);
-    if (this.isConnected) {
-      await this.fetchRepoScope();
-    }
-  }
-  
-  private async fetchRepoScope() {
-    this.isLoadingScope.set(true);
-    try {
-      const hasScope = await this.githubAuth.checkRepoScope();
-      this.mapRepos.set(hasScope);
-    } catch (e) {
-      console.error('Failed to check GitHub repo scope', e);
-    } finally {
-      this.isLoadingScope.set(false);
-    }
   }
   
   closeModal(event: MouseEvent) {
     this.showModal.set(false);
   }
 
-  async toggleMapRepos() {
-    const newValue = !this.mapRepos();
-    this.mapRepos.set(newValue);
-    
-    if (this.isConnected) {
-      // If connected, toggling instantly triggers re-auth to change token scopes
-      this.showModal.set(false);
-      await this.githubAuth.linkGithub(newValue);
-    }
-  }
-
   link() {
-    this.githubAuth.linkGithub(this.mapRepos());
+    this.githubAuth.linkGithub();
   }
 
   unlink() {

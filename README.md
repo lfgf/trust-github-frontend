@@ -21,10 +21,10 @@ You can verify that:
 
 ## 📦 What does this module do?
 
-This library encapsulates the frontend logic for Kojinx's GitHub integration. It provides Angular components and services to:
-1. Initiate the OAuth flow securely (`GithubAuthService.initiateOAuth`).
+This library encapsulates the frontend logic for Kojinx's **GitHub App** integration (fine-grained `metadata: read-only` permissions). It provides Angular components and services to:
+1. Initiate the OAuth flow securely without broad scope requests (`GithubAuthService.initiateOAuth`).
 2. Provide a standardized login button (`<github-login-button>`).
-3. Provide an integration management card (`<github-integration-card>`) to link and unlink accounts.
+3. Provide an integration management card (`<github-integration-card>`) with clear security audit guarantees.
 
 The services communicate exclusively with the Kojinx Trust Module backend and the Tauri native API layer for secure browser opening.
 
