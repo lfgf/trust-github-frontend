@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { GithubAuthService } from '../../services/github-auth.service';
 
 @Component({
@@ -16,8 +16,15 @@ import { GithubAuthService } from '../../services/github-auth.service';
 export class GithubLoginButtonComponent {
   @Input() text: string = 'Continue with GitHub';
   @Input() isLoading: boolean = false;
+  @Output() onClick = new EventEmitter<void>();
+
   constructor(private githubAuth: GithubAuthService) {}
+
   login() {
-    this.githubAuth.initiateOAuth();
+    if (this.onClick.observed) {
+      this.onClick.emit();
+    } else {
+      this.githubAuth.initiateOAuth();
+    }
   }
 }
